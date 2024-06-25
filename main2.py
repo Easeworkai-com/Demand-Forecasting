@@ -38,7 +38,7 @@ def load_data():
 
 df1 = load_data()
 
-def forecast_product(product_name, forecast_duration, duration_unit, economic_index, raw_material_price):
+def forecast_product(product_name, forecast_duration, duration_unit, economic_index, raw_material_price, Holidays, Promotions,New_Product_Launches,Regulatory_Changes,Supply_Chain_Disruptions,Demographic_Changes):
     lead_time = 10  # Default lead time in days
     service_level = 0.95  # Default service level (95%)
 
@@ -144,6 +144,7 @@ def forecast_product(product_name, forecast_duration, duration_unit, economic_in
 def handle_chat():
     API_URL = "http://127.0.0.1:8000"
     logo_url = "https://github.com/SouSingh/reccomder/blob/main/logo.png?raw=true"
+    st.sidebar.image(logo_url, width=150)
     st.sidebar.header("Ask EaseAI")
  
     # Reset Conversation Memory button at the top of the sidebar
@@ -210,6 +211,7 @@ def handle_chat():
 handle_chat()
 # Main layout
 st.title('Demand Forecasting')
+st.subheader('Forecasting Parameters')
 
 # Modify the selection widgets to use and update session state
 col1, col2, col3 = st.columns([3, 2, 2])
@@ -252,21 +254,47 @@ with col5:
                          index=0,
                          key='state')
 
-col6, col7 = st.columns(2)
+col6, col7,col8, col9  = st.columns(4)
 with col6:
     economic_index = st.checkbox('Economic Index', key='economic_index')
     
 with col7:
     raw_material_price = st.checkbox('Raw Material Price Index', key='raw_material_price')
 
-# The forecast button can remain the same
+with col8:
+    Holidays = st.checkbox('Holidays', key='Holidays')
+    
+with col9:
+    Promotions = st.checkbox('Promotions', key='Promotions')
+
+col10, col11,col12, col13  = st.columns(4)
+with col10:
+    New_Product_Launches = st.checkbox('New Product Launches', key='New_Product_Launches')
+    
+with col11:
+    Regulatory_Changes = st.checkbox('Regulatory Changes', key='Regulatory_Changes')
+
+with col12:
+    Supply_Chain_Disruptions = st.checkbox('Supply Chain Disruptions', key='Supply_Chain_Disruptions')
+    
+with col13:
+    Demographic_Changes = st.checkbox('Demographic Changes', key='Demographic_Changes')
+    
+
+
 if st.button('Forecast', use_container_width=True):
     if st.session_state.product_name:
         forecast_product(st.session_state.product_name, 
                          st.session_state.forecast_duration, 
                          st.session_state.duration_unit, 
                          st.session_state.economic_index, 
-                         st.session_state.raw_material_price)
+                         st.session_state.raw_material_price,
+                         st.session_state.Holidays,
+                         st.session_state.Promotions,
+                         st.session_state.New_Product_Launches,
+                         st.session_state.Regulatory_Changes,
+                         st.session_state.Supply_Chain_Disruptions,
+                         st.session_state.Demographic_Changes)
     else:
         st.write("Please select a product name.")
 # Display forecast results if shown

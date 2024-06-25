@@ -16,5 +16,5 @@ scipy==1.14.0
 SQLAlchemy==2.0.30
 streamlit==1.16.0
 streamlit==1.29.0
-streamlit==1.36.0
+
 uvicorn==0.30.1
