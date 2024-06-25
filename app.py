@@ -8,13 +8,15 @@ from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from typing import List, Dict, Any
 from langchain_experimental.tools import PythonREPLTool
 from langchain.memory import ConversationSummaryMemory
-#from langchain.memory import ConversationBufferMemory
-#from langchain.agents.agent_toolkits import SQLDatabaseToolkit
+
+# from langchain.memory import ConversationBufferMemory
+# from langchain.agents.agent_toolkits import SQLDatabaseToolkit
 
 from langchain_openai import ChatOpenAI
 from langchain_openai import AzureChatOpenAI
 from langchain.chains import LLMChain
-from db import engine
+
+# from db import engine
 from sqlalchemy import create_engine, inspect
 import os
 import uuid
@@ -23,10 +25,11 @@ from dotenv import load_dotenv
 
 
 # Load the .env file
-load_dotenv()
 
 # Access the environment variable
-groq_api_key = os.environ.get("GROQ_API")
+# groq_api_key = os.environ.get(
+#    "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"
+# )
 
 
 # Define the model for the request body
@@ -34,26 +37,35 @@ class PromptRequest(BaseModel):
     prompt: str
     session_id: str
 
+
 # Define the model for creating a new session
 class CreateSessionRequest(BaseModel):
     session_name: str
 
+
 # Initialize FastAPI app
 app = FastAPI()
-
 
 
 # Database setup
 db = SQLDatabase.from_uri("sqlite:///my_database.db")
 print("Available tables:", db.get_usable_table_names())
 
+load_dotenv()
+
+open_api = os.environ.get("OPEN_AI")
+llm = ChatOpenAI(
+    openai_api_key=open_api,
+    model="gpt-4",
+    temperature=0,
+)
 
 
-llm = ChatGroq(
-      temperature=0, 
-      groq_api_key = groq_api_key, 
-      model_name="llama3-70b-8192"
-        )
+"""llm = ChatGroq(
+    temperature=0,
+    groq_api_key="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",
+    model_name="llama3-70b-8192",
+)"""
 
 memory = ConversationSummaryMemory(llm=llm)
 python_repl_tool = PythonREPLTool()
@@ -138,11 +150,11 @@ SELECT [death] FROM covidtracking WHERE state = 'TX' AND date LIKE '2020%'"
 
 agent_executor = create_sql_agent(
     llm,
-    #db=db,
+    # db=db,
     verbose=True,
     memory=memory,
     prefix=MSSQL_AGENT_PREFIX,
-    format_instructions = MSSQL_AGENT_FORMAT_INSTRUCTIONS,
+    format_instructions=MSSQL_AGENT_FORMAT_INSTRUCTIONS,
     toolkit=toolkit,
     handle_parsing_errors=True,
     agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
@@ -150,6 +162,7 @@ agent_executor = create_sql_agent(
 )
 
 session_history: Dict[str, List[Dict[str, str]]] = {}
+
 
 def is_confident(response: str) -> bool:
     uncertain_keywords = [
@@ -159,9 +172,10 @@ def is_confident(response: str) -> bool:
         "no such column",
         "ambiguous column name",
         "syntax error near",
-        "did not understand the question in relation to the database"
+        "did not understand the question in relation to the database",
     ]
     return not any(keyword in response for keyword in uncertain_keywords)
+
 
 @app.post("/query")
 async def query_db(request: PromptRequest):
@@ -183,8 +197,8 @@ async def query_db(request: PromptRequest):
         response = agent_executor.invoke(conversation_context)
 
         # Extract the actual response text if it's in a dictionary
-        if isinstance(response, dict) and 'output' in response:
-            response_text = response['output']
+        if isinstance(response, dict) and "output" in response:
+            response_text = response["output"]
         else:
             response_text = str(response)
 
@@ -206,16 +220,24 @@ async def query_db(request: PromptRequest):
         # Handling errors
         if "parsing error" in str(e).lower():
             clarifying_question = f"I encountered an error understanding your request: '{prompt}'. Can you please provide more details or clarify your question?"
-            memory.save_context({"prompt": f"{prompt}"}, {"response": f"{clarifying_question}"})
+            memory.save_context(
+                {"prompt": f"{prompt}"}, {"response": f"{clarifying_question}"}
+            )
             if session_id not in session_history:
                 session_history[session_id] = []
             session_history[session_id].append({"role": "User", "message": prompt})
-            session_history[session_id].append({"role": "EaseAI", "message": clarifying_question})
-            return {"response": clarifying_question, "conversation": session_history[session_id]}
+            session_history[session_id].append(
+                {"role": "EaseAI", "message": clarifying_question}
+            )
+            return {
+                "response": clarifying_question,
+                "conversation": session_history[session_id],
+            }
         else:
             # Log the error for debugging
             print(f"Error: {e}")
             raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/reset_memory")
 async def reset_memory(session_id: str):
@@ -224,9 +246,11 @@ async def reset_memory(session_id: str):
         del session_history[session_id]
     return {"message": "Conversation memory reset successfully"}
 
+
 @app.get("/history/{session_id}")
 async def get_history(session_id: str):
     return {"history": session_history.get(session_id, [])}
+
 
 @app.post("/create_session")
 async def create_session(request: CreateSessionRequest):
@@ -234,10 +258,13 @@ async def create_session(request: CreateSessionRequest):
     session_history[session_id] = []
     return {"session_id": session_id, "session_name": request.session_name}
 
+
 @app.get("/sessions")
 async def get_sessions():
     return {"sessions": list(session_history.keys())}
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
