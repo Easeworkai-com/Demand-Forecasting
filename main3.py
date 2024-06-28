@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from sklearn.preprocessing import LabelEncoder
 import os
+import matplotlib.dates as mdates
 from streamlit_app import (
     query_db,
     reset_memory,
@@ -16,14 +17,14 @@ from streamlit_app import (
 )
 import requests
 
-# Set page config
-# st.set_page_config(layout="wide", page_title="Demand Forecasting")
+  #Set page config
+st.set_page_config(layout="wide", page_title="Demand Forecasting")
 
 # Initialize session state variables
 if "product_name" not in st.session_state:
     st.session_state["product_name"] = ""
 if "forecast_duration" not in st.session_state:
-    st.session_state["forecast_duration"] = 1
+    st.session_state["forecast_duration"] = None
 if "duration_unit" not in st.session_state:
     st.session_state["duration_unit"] = ""
 if "forecast_shown" not in st.session_state:
@@ -34,8 +35,7 @@ if "safety_stock" not in st.session_state:
     st.session_state["safety_stock"] = 0
 if "reorder_point" not in st.session_state:
     st.session_state["reorder_point"] = 0
-if "performance_metrics" not in st.session_state:
-    st.session_state["performance_metrics"] = None
+
 
 
 # Load your data
@@ -171,8 +171,14 @@ def forecast_product(
     )
 
     z_score = norm.ppf(service_level)
-    safety_stock = int(z_score * std_demand_lead_time)
-    reorder_point = int(mean_demand_lead_time + safety_stock)
+    
+    # Handle potential NaN values
+    if np.isnan(std_demand_lead_time):
+        safety_stock = 0
+        reorder_point = int(mean_demand_lead_time)
+    else:
+        safety_stock = int(max(0, z_score * std_demand_lead_time))
+        reorder_point = int(mean_demand_lead_time + safety_stock)
 
     # Perform cross-validation
     df_cv = cross_validation(
@@ -180,14 +186,18 @@ def forecast_product(
     )
     df_p = performance_metrics(df_cv)
 
+    # Ensure the forecast data covers the correct date range
+    last_date = df_prophet["ds"].max()
+    future_forecast = forecast[forecast["ds"] > last_date]
+    future_forecast = future_forecast.iloc[:forecast_days]  # Limit to requested forecast duration
+
     st.session_state["forecast_data"] = future_forecast
     st.session_state["safety_stock"] = safety_stock
     st.session_state["reorder_point"] = reorder_point
-    st.session_state["performance_metrics"] = df_p
+    
     st.session_state["forecast_shown"] = True
 
     return future_forecast, safety_stock, reorder_point, df_p
-
 
 def handle_chat():
     API_URL = "http://127.0.0.1:8000"
@@ -333,11 +343,17 @@ def handle_chat():
     .session-button:hover {
         background-color: #4b13ba; /* Darker purple */
     }
-    </style>
-    """,
-        unsafe_allow_html=True,
+    
+    .main .block-container {
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      padding-left: 5rem;
+      padding-right: 5rem;
+    }
+</style>
+""",unsafe_allow_html=True,
     )
-    logo_url = "https://github.com/SouSingh/reccomder/blob/main/logo.png?raw=true"
+    logo_url = r"C:\Users\Acer\anaconda latest\Pranali\Easework\safety stock\all_Code\logo.png"
     st.sidebar.image(logo_url, width=150)
     st.sidebar.header("Ask EaseAI")
 
@@ -461,11 +477,10 @@ with col2:
     )
 with col3:
     forecast_duration = st.number_input(
-        f'Number of {duration_unit.capitalize() if duration_unit else "Units"}:',
+        f'Number of {st.session_state.duration_unit.capitalize() if st.session_state.duration_unit else "Units"}:',
         min_value=1,
         step=1,
-        value=None,
-        placeholder="Enter number",
+        key="forecast_duration"
     )
 
 
@@ -523,10 +538,10 @@ with col13:
 
 
 if st.button("Forecast", use_container_width=True):
-    if st.session_state.product_name:
+    if st.session_state.product_name and st.session_state.duration_unit and st.session_state.forecast_duration:
         forecast_product(
             st.session_state.product_name,
-            st.session_state.forecast_duration,
+            int(st.session_state.forecast_duration),  # Ensure this is an integer
             st.session_state.duration_unit,
             st.session_state.economic_index,
             st.session_state.raw_material_price,
@@ -538,8 +553,13 @@ if st.button("Forecast", use_container_width=True):
             st.session_state.Demographic_Changes,
         )
     else:
-        st.write("Please select a product name.")
-# Display forecast results if shown
+        st.write("Please select a product name, forecast duration, and duration unit.")
+
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import matplotlib.dates as mdates
+
 if st.session_state["forecast_shown"]:
     future_forecast = st.session_state["forecast_data"]
 
@@ -548,26 +568,54 @@ if st.session_state["forecast_shown"]:
 
     with tabs[0]:
         st.subheader("Forecast Plot")
-        fig, ax = plt.subplots(figsize=(12, 6))
+        fig, ax = plt.subplots(figsize=(14, 6))
         ax.plot(
             future_forecast["ds"],
             future_forecast["yhat"],
             label="Predicted",
             marker="o",
+            linestyle="-",
+            color="b",
         )
-        ax.fill_between(
-            future_forecast["ds"],
-            future_forecast["yhat_lower"],
-            future_forecast["yhat_upper"],
-            color="k",
-            alpha=0.2,
-        )
+
+        # Add labels to each point with improved positioning
+        for i, row in future_forecast.iterrows():
+            ax.annotate(
+                f'{int(row["yhat"])}',
+                xy=(row["ds"], row["yhat"]),
+                textcoords="offset points",
+                xytext=(0, 10),  # Offset label by 10 points in y-direction
+                ha='center',
+                fontsize=10,  # Increased font size
+                color="blue"
+            )
+
         ax.legend()
         ax.set_title(
             f'Forecasted Demand for {st.session_state["product_name"]} for the Next {st.session_state["forecast_duration"]} {st.session_state["duration_unit"].capitalize()}'
         )
         ax.set_xlabel("Date")
         ax.set_ylabel("Units Sold")
+
+        # Set custom ticks for x-axis
+        date_range = future_forecast["ds"]
+        ticks = pd.date_range(start=date_range.min(), end=date_range.max(), periods=7)
+        ax.set_xticks(ticks)
+        ax.set_xlim(date_range.min(), date_range.max())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+
+        # Add padding to y-axis limits to avoid label merging with the border
+        y_min, y_max = future_forecast["yhat"].min(), future_forecast["yhat"].max()
+        y_padding = (y_max - y_min) * 0.1  # Add 10% padding to top and bottom
+        ax.set_ylim(y_min - y_padding, y_max + y_padding)
+
+        # Adjust x-axis limits to avoid labels on vertical lines
+        x_min, x_max = date_range.min(), date_range.max()
+        ax.set_xlim(x_min - pd.Timedelta(days=1), x_max + pd.Timedelta(days=1))
+
+        plt.xticks(rotation=45, ha='right')
+        ax.figure.autofmt_xdate()
+        plt.tight_layout()
         st.pyplot(fig)
 
     with tabs[1]:

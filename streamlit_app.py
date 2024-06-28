@@ -1,8 +1,7 @@
 import streamlit as st
 import requests
 import time
-# Set page config
-st.set_page_config(layout="wide", page_title="Demand Forecasting")
+
 
 API_URL = "http://127.0.0.1:8000"
 

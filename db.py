@@ -24,17 +24,17 @@ def remove_tables():
 
 
 # Load Excel data into a DataFrame
-"""df = pd.read_excel("stock.csv")
+df = pd.read_csv("stock.csv")
 
 # Create a connection to the SQLite database
 engine = create_engine("sqlite:///my_database.db")
 
 # Write DataFrame to SQL table
-df.to_sql("forcast_demand_table", con=engine, if_exists="replace", index=False)
+df.to_sql("stock_table", con=engine, if_exists="replace", index=False)
 
-print("Data transferred successfully!")"""
+print("Data transferred successfully!")
 
 db = SQLDatabase.from_uri("sqlite:///my_database.db")
 
-remove_tables()
+#remove_tables()
 print("Available tables:", db.get_usable_table_names())
