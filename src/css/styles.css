@@ -1,0 +1,101 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Playwrite+US+Trad:wght@100..400&family=Readex+Pro:wght@160..700&display=swap");
+
+* {
+  font-family: "Readex Pro", sans-serif !important;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  scroll-behavior: smooth;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: #5e17eb;
+}
+
+.logo {
+  position: absolute;
+  top: -6.3rem;
+  border-radius: 4rem;
+  width: 12.5rem;
+  height: 3.5rem;
+  scale: 0.8;
+}
+
+/* In case want to change config settings from UI or want to deploy remove display*/
+[data-testid="stHeader"] {
+  display: none;
+}
+
+li,
+td {
+  font-weight: 300;
+}
+
+[data-testid="stMarkdownContainer"] > p,
+div,
+ol {
+  font-weight: 400;
+}
+
+.stButton > button,
+.stDownloadButton > button {
+  border-color: #3b82f6;
+  border-radius: 5px;
+  padding: 0.5rem 2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+.stButton > button:hover {
+  color: white;
+  background-color: #2563eb;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo-bot {
+  width: 30px;
+  border-radius: 50%;
+}
+
+.user-pfp {
+  background-color: #93aa12; /* Your desired color */
+  mix-blend-mode: difference;
+  width: 30px;
+  border-radius: 50%;
+  padding: 0.1rem;
+}
+
+.user-prompt {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  border-radius: 5px;
+  background-color: white;
+  padding: 1rem;
+  width: 100%;
+  height: max-content;
+}
+
+.ai-prompt {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin: 1rem 0;
+}
+
+.user-msg {
+  width: 90%;
+  overflow-wrap: break-word;
+  padding: 0 0.7rem;
+  text-align: right;
+}
+
+.ai-msg {
+  margin: 0 0.7rem;
+}
+
+[data-baseweb="tab-list"] {
+  margin: 1rem 0;
+}

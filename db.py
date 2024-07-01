@@ -24,7 +24,7 @@ def remove_tables():
 
 
 # Load Excel data into a DataFrame
-df = pd.read_csv("stock.csv")
+df = pd.read_csv("data/stock.csv")
 
 # Create a connection to the SQLite database
 engine = create_engine("sqlite:///my_database.db")
