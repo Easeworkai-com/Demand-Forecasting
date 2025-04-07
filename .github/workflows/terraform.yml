@@ -1,5 +1,4 @@
 name: 'Terraform and Docker Push'
-
 on:
   push:
     branches: [ "master" ]
