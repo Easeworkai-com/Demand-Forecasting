@@ -1,0 +1,56 @@
+name: 'Terraform and Docker Push'
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  terraform:
+    name: 'Terraform and Docker Push'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - id: auth
+        uses: google-github-actions/auth@v2.0.0
+        with: 
+          workload_identity_provider: 'projects/198711600574/locations/global/workloadIdentityPools/github-demo-pool/providers/github ' 
+          service_account: 'github-worload-identity-federa@easework-projects.iam.gserviceaccount.com'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -input=false
+
+      - name: Terraform Apply
+        run: terraform apply -input=false -auto-approve
+
+      # -------------------------------
+      # Docker Build and Push Section
+      # -------------------------------
+      - name: Configure Docker Auth for Artifact Registry
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build Docker Image
+        run: |
+          docker build -t  us-central1-docker.pkg.dev/easework-projects/easeworkai-essentail/demand-forcasting-api:3.0 .
+
+      - name: Push Docker Image
+        run: |
+          docker push  us-central1-docker.pkg.dev/easework-projects/easeworkai-essentail/demand-forcasting-api:3.0
