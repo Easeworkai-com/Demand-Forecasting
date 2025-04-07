@@ -1,8 +1,9 @@
 name: 'Terraform and Docker Push'
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]  # Changed from "master" to "main"
   pull_request:
+    branches: [ "main" ]  # Optional: ensure PRs to main also trigger
 
 permissions:
   contents: read
@@ -24,7 +25,7 @@ jobs:
       - id: auth
         uses: google-github-actions/auth@v2.0.0
         with: 
-          workload_identity_provider: 'projects/198711600574/locations/global/workloadIdentityPools/github-demo-pool/providers/github ' 
+          workload_identity_provider: 'projects/198711600574/locations/global/workloadIdentityPools/github-demo-pool/providers/github' 
           service_account: 'github-worload-identity-federa@easework-projects.iam.gserviceaccount.com'
 
       - name: Setup Terraform
@@ -48,8 +49,8 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t  us-central1-docker.pkg.dev/easework-projects/easeworkai-essentail/demand-forcasting-api:4.0 .
+          docker build -t us-central1-docker.pkg.dev/easework-projects/easeworkai-essentail/demand-forcasting-api:4.0 .
 
       - name: Push Docker Image
         run: |
-          docker push  us-central1-docker.pkg.dev/easework-projects/easeworkai-essentail/demand-forcasting-api:4.0
+          docker push us-central1-docker.pkg.dev/easework-projects/easeworkai-essentail/demand-forcasting-api:4.0
