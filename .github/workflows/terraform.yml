@@ -33,6 +33,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
+          cd ../..
           docker build -t us-central1-docker.pkg.dev/easework-projects/easeworkai-essentail/demand-forcasting-api:3.0 .
 
       - name: Push Docker Image
