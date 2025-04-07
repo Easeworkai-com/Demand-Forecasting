@@ -1,56 +1,40 @@
-name: 'Terraform and Docker Push'
+name: 'Docker Build and Push to GAR'
+
 on:
   push:
-    branches: [ "main" ]  # Changed from "master" to "main"
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]  # Optional: ensure PRs to main also trigger
+    branches: [ "main" ]
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  terraform:
-    name: 'Terraform and Docker Push'
+  docker:
+    name: 'Docker Build & Push'
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        shell: bash
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - id: auth
-        uses: google-github-actions/auth@v2.0.0
-        with: 
-          workload_identity_provider: 'projects/198711600574/locations/global/workloadIdentityPools/github-demo-pool/providers/github' 
-          service_account: 'github-worload-identity-federa@easework-projects.iam.gserviceaccount.com'
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/198711600574/locations/global/workloadIdentityPools/githubactions-provider/providers/github
+          service_account: github-wif@easework-projects.iam.gserviceaccount.com
+          token_format: access_token
+          export_environment_variables: true
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan -input=false
-
-      - name: Terraform Apply
-        run: terraform apply -input=false -auto-approve
-
-      # -------------------------------
-      # Docker Build and Push Section
-      # -------------------------------
-      - name: Configure Docker Auth for Artifact Registry
+      - name: Configure Docker for Artifact Registry
         run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          echo '{"credHelpers": {"us-central1-docker.pkg.dev": "gcloud"}}' > ~/.docker/config.json
 
       - name: Build Docker Image
         run: |
-          docker build -t us-central1-docker.pkg.dev/easework-projects/easeworkai-essentail/demand-forcasting-api:4.0 .
+          docker build -t us-central1-docker.pkg.dev/easework-projects/easeworkai-essential/inventory-bom:latest .
 
       - name: Push Docker Image
         run: |
-          docker push us-central1-docker.pkg.dev/easework-projects/easeworkai-essentail/demand-forcasting-api:4.0
+          docker push us-central1-docker.pkg.dev/easework-projects/easeworkai-essential/inventory-bom:latest
