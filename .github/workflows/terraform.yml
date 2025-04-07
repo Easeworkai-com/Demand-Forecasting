@@ -1,6 +1,5 @@
 name: 'Docker Build and Push to GAR'
 
-
 on:
   push:
     branches: [ "main" ]
